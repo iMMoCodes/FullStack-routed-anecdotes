@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Link,
   useParams,
+  useNavigate,
+  useMatch,
 } from 'react-router-dom'
 
 const Menu = () => {
@@ -39,9 +40,7 @@ const AnecdoteList = ({ anecdotes }) => (
   </div>
 )
 
-const SingleAnecdote = ({ anecdotes }) => {
-  const id = useParams().id
-  const anecdote = anecdotes.find((n) => n.id === Number(id))
+const SingleAnecdote = ({ anecdote }) => {
   return (
     <div>
       <h2>{anecdote.content}</h2>
@@ -93,6 +92,7 @@ const CreateNew = (props) => {
   const [content, setContent] = useState('')
   const [author, setAuthor] = useState('')
   const [info, setInfo] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -102,6 +102,7 @@ const CreateNew = (props) => {
       info,
       votes: 0,
     })
+    navigate('/')
   }
 
   return (
@@ -158,9 +159,18 @@ const App = () => {
 
   const [notification, setNotification] = useState('')
 
+  const match = useMatch('/anecdotes/:id')
+  const anecdote = match
+    ? anecdotes.find((anecdote) => anecdote.id === Number(match.params.id))
+    : null
+
   const addNew = (anecdote) => {
     anecdote.id = (Math.random() * 10000).toFixed(0)
     setAnecdotes(anecdotes.concat(anecdote))
+    setNotification(`a new anecdote ${anecdote.content} created!`)
+    setTimeout(() => {
+      setNotification('')
+    }, 5000)
   }
 
   const anecdoteById = (id) => anecdotes.find((a) => a.id === id)
@@ -177,20 +187,21 @@ const App = () => {
   }
 
   return (
-    <Router>
+    <>
       <h1>Software anecdotes</h1>
       <Menu />
+      {notification}
       <Routes>
         <Route
           path='/anecdotes/:id'
-          element={<SingleAnecdote anecdotes={anecdotes} />}
+          element={<SingleAnecdote anecdote={anecdote} />}
         />
         <Route path='/about' element={<About />} />
         <Route path='/create' element={<CreateNew addNew={addNew} />} />
         <Route path='/' element={<AnecdoteList anecdotes={anecdotes} />} />
       </Routes>
       <Footer />
-    </Router>
+    </>
   )
 }
 
